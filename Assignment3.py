@@ -248,6 +248,7 @@ class GaussianNB():
             
     def joint_likelihood(self,X,y):
         temp =None
+        self.p_x_yn = np.zeros(10)
         for i in range(self.n_instances):
             x_n = X[i,:]
             y_n = y[i]
@@ -256,14 +257,10 @@ class GaussianNB():
                 temp = math.pow((x_nf - meansArray[y_n][j]),2)/2*math.pow((self.varc[y_n]),2)
                 p_xj_yn= (1/ np.sqrt(2*pi*self.varc[y_n]))* math.exp(-temp)
                 
-            p_x_yn =  np.log(p_xj_yn) + np.log(self.p_y[y_n])
-                
+            self.p_x_yn[i] =  np.log(p_xj_yn) + np.log(self.p_y[y_n])
             
-                   
-            
-            
-        
-                 
+    
+
                 
         
     
@@ -275,6 +272,10 @@ class GaussianNB():
                                     self.meansArray_5,self.meansArray_6,self.meansArray_7,self.meansArray_8,self.meansArray_9])
         self.computeVariance(self.n_instances, X,y)
         self.prior_class(self, y)
+        self.joint_likelihood(self,X,y)
         return self
+    
+    def predict(self,X,y):
+        
     
     
