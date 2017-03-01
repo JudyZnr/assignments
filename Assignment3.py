@@ -17,9 +17,13 @@ class GaussianNB():
     def __init__(self):
         self.offset = 10e-5
                
-    def accurateScore(self,y1,y2):
+    def accurateScore(y1,y2):
         score = y1==y2
         return np.average(score)
+    
+    def confusion_matrix(y1,y2):
+        return pd.crosstab(y_true,y_pred,
+                           rownames=['Actual'],columnames=['Predicted'])
     
     def computeMeans(self, N, X, y):
 # mean value of each feature per class(conditional)
@@ -99,7 +103,7 @@ class GaussianNB():
     
     def function_5(self, x):
         for j in range(self.n_features):
-            self.sum_mean-6[j] = self.sum_mean_6[j] + x[j]
+            self.sum_mean_6[j] = self.sum_mean_6[j] + x[j]
         self.meansArray_5 = np.zeros(self.n_features)
         self.meansArray_5 = 1/self.n_instances * sum_mean_5
     
@@ -246,24 +250,21 @@ class GaussianNB():
         self.p_y = np.array([self.p_y0,self.p_y1,self.p_y2,self.p_y3,self.p_y4,
                              self.p_y5,self.p_y6,self.p_y7,self.p_y8,self.p_y9])
             
-    def joint_likelihood(self,X,y):
+    def joint_likelihood(self,x):
         temp =None
-        self.p_x_yn = np.zeros(10)
-        for i in range(self.n_instances):
-            x_n = X[i,:]
-            y_n = y[i]
+        for i in range(len(self.p_y)):
             for j in range(self.n_features):
-                x_nf = x_n[j]
-                temp = math.pow((x_nf - meansArray[y_n][j]),2)/2*math.pow((self.varc[y_n]),2)
-                p_xj_yn= (1/ np.sqrt(2*pi*self.varc[y_n]))* math.exp(-temp)
-                
-            self.p_x_yn[i] =  np.log(p_xj_yn) + np.log(self.p_y[y_n])
-            
-    
-
-                
+                x_nf = x[j]
+                temp = math.pow((x_nf - self.meansArray[i][j]),2)/2*math.pow((self.varc[i]),2)
+                p_xj_yi= (1/ np.sqrt(2*pi*self.varc[i]))* math.exp(-temp)
+                # calculate the P(X=instance|y=class)
+                np.log(self.p_x_yi) = np.log(self.p_x_yi) + np.log(p_xj_yi)
+            # calculate the P(y=class|X=instance) we can get the predict value
+            np.log(self.p_yi_x[i]) = np.log(self.p_y[i]) + np.log(self.p_x_yi)
         
+        return np.argmax(self.p_yi_x)
     
+  
     def fit(self, X, y):
         
         self.n_instances,self.n_features = np.shape(X)
@@ -271,11 +272,36 @@ class GaussianNB():
         self.meansArray = np.array([self.meansArray_0,self.meansArray_1,self.meansArray_2,self.meansArray_3,self.meansArray_4,
                                     self.meansArray_5,self.meansArray_6,self.meansArray_7,self.meansArray_8,self.meansArray_9])
         self.computeVariance(self.n_instances, X,y)
-        self.prior_class(self, y)
-        self.joint_likelihood(self,X,y)
+        self.prior_class(y)
+       
         return self
     
     def predict(self,X,y):
+        self.y_pred = np.zeros(len(y))
+        for i in range(self.n_instances):
+            x_n = X[i,:]
+            self.y_pred[i] = self.joint_likelihood(x_n)
+        
+if __name__=="__main__":
+    
+    nb = GaussianNB()
+    with open("output.txt","w") as f_out:
+        df = pd.read_csv('/Users/administorzz/Downloads/digits.csv')
+        X = df.ix[:,:-1]
+        y = df.ix[:,-1]
+        self.y_true = y
+        
+        nb.fit(X,y)
+        nb.predict(X)
+        
+        f_out.write(nb.accurateScore(self.y_true,self.y_pred))
+        f_out.write('\n')
+        f_out.write(nb.confusion_matrix(self.y_true,self.y_pred))
+        
+    
+            
+        
+    
         
     
     
